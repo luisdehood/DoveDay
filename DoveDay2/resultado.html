@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tu cumplido</title>
+
+  <!-- Tipografías -->
+  <style>
+  @font-face {
+    font-family: 'Caveat';
+    src: url('assets/fonts/Caveat-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+  }
+  </style>
+  <link rel="stylesheet" href="assets/fonts/sofia-pro.css">
+  <link rel="stylesheet" href="assets/fonts/caveat.css"><!-- debe cargar Caveat-Regular.woff2 -->
+
+  <style>
+    :root{
+      --dove-navy:#00105d;
+      --pink:#F29FC5;
+      --card-w: 540px; /* ancho de la tarjeta */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:#fafafa; color:var(--dove-navy);
+      font-family:"Sofia Pro", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      display:grid; place-items:center; padding:32px 16px;
+    }
+
+    .wrap{ width:100%; max-width:760px; text-align:center; }
+    .card{
+      width:100%; max-width:var(--card-w);
+      background:#fff; margin:0 auto; padding:28px 28px 36px;
+      border-radius:16px;
+      box-shadow:0 14px 36px rgba(0,0,0,.12);
+      text-align:left;
+    }
+    .card p{ margin:0 0 18px 0; line-height:1.6; font-size:18px; font-weight:400; }
+    .saludo{ font-weight:700; margin-bottom:18px; }
+    .lead-in{ margin-top:6px; }
+    .micro{ font-style:italic; opacity:.9; }
+
+    .label-adj{ margin:18px 0 8px; font-weight:600; }
+    .adjetivo{
+      font-weight:900; color:var(--pink); font-size:64px; line-height:1; margin:6px 0 10px;
+      text-transform:lowercase; letter-spacing:.5px;
+      text-align: center;
+    }
+    .frase{
+      font-family:"Caveat", cursive, "Sofia Pro", system-ui, sans-serif;
+      font-size:30px; line-height:1.25; text-align:center; margin:10px auto 18px;
+      max-width: 420px;
+      display:block; text-align:center;
+      margin-left:auto; margin-right:auto;
+    }
+    .logo-dove{ display:block; margin:18px auto 0; width:52px; height:auto; }
+
+    .sticker{ width:64px; height:auto; position:absolute; }
+    .sticker.top-right{ right:24px; top:18px; }
+    .sticker.mid-right{ right:24px; bottom:120px; }
+
+    .card-frame{ position:relative; }
+
+    .share{
+      margin-top:22px; display:grid; place-items:center; gap:10px;
+    }
+    .share-icon{ width:44px; height:auto; }
+    .share p{ margin:0; font-size:20px; font-weight:600; }
+
+    /* Responsive */
+    @media (max-width:560px){
+      .card{ padding:22px 20px 28px }
+      .card p{ font-size:16px }
+      .adjetivo{ font-size:52px }
+      .frase{ font-size:26px }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="card card-frame" id="card">
+      <!-- stickers opcionales (si tienes PNGs decorativos)
+      <img src="assets/sticker_flecha.png" class="sticker top-right" alt="">
+      <img src="assets/sticker_coroa.png" class="sticker mid-right" alt="">
+      -->
+
+      <p class="saludo" id="nombreLine">María,</p>
+
+      <p id="parrafo1">
+        Desde pequeña has tenido el coraje de mirar de frente a tus miedos y dar pasos
+        que pocos se atreven a dar. Aquella vez que decidiste enfrentarte al público,
+        aún con el corazón latiendo fuerte, marcó el inicio de una historia en la que tu
+        valentía y determinación serían protagonistas.
+      </p>
+
+      <p id="parrafo2">
+        Con el tiempo, descubriste el valor de algo que no siempre se ve: tu capacidad
+        para escuchar y entender de verdad a los demás, regalándoles un espacio seguro
+        y lleno de comprensión. Y, como si eso fuera poco, tu generosidad para ayudar
+        sin esperar nada a cambio se ha convertido en un faro que guía, reconforta y deja
+        huella. <span class="micro">Eres la prueba de que la verdadera fuerza no siempre se grita… a veces
+        se siente en el alma.</span>
+      </p>
+
+      <p class="label-adj">El cumplido perfecto para ti es:</p>
+      <div class="adjetivo" id="adjetivo">auténtica</div>
+
+      <div class="frase" id="frase">Porque ser tú misma es, y siempre será, tu mayor poder.</div>
+
+      <img src="assets/dove-logo.png" alt="Dove" class="logo-dove">
+    </div>
+
+    <div class="share">
+      <img src="assets/share.png" class="share-icon" alt="">
+      <p>Comparte tu resultado en redes</p>
+    </div>
+  </main>
+
+  <script>
+    // Lee datos del formulario
+    const data = JSON.parse(localStorage.getItem('complimentForm') || "{}");
+
+    // Helper para capitalizar nombre
+    const cap = s => (s||"").trim().replace(/\s+/g,' ').replace(/(^|\\s)\\S/g, m => m.toUpperCase());
+
+    // Helper para capitalizar primera letra y poner resto en minúsculas
+    const capFirst = str => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+    // Fallbacks por si falta algo
+    const nombre = cap(data.name) || "Amiga";
+    const logro = data.achievement || "un logro que te llenó de orgullo";
+    const apoyo = data.support || "el apoyo de quienes te quieren";
+    const sueno = data.dreams || "tus metas para el futuro";
+    const consejo = data.advice || "confiar en ti, siempre";
+
+    // Si ya tienes endpoint de IA, descomenta este bloque y reemplaza la plantilla:
+    /*
+    (async () => {
+      try {
+        const res = await fetch('/api/generate-letter', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ name:nombre, achievement:logro, support:apoyo, dreams:sueno, advice:consejo })
+        });
+        const json = await res.json();
+        // Espera { letterText, adjective, closingLine }
+        document.getElementById('nombreLine').textContent = json.name + ',';
+        document.getElementById('parrafo1').textContent = json.paragraph1;
+        document.getElementById('parrafo2').textContent = json.paragraph2;
+        document.getElementById('adjetivo').textContent = capFirst(json.adjective);
+        document.getElementById('frase').textContent = json.closingLine;
+      } catch(e) { console.error('Fallback local por error IA', e); }
+    })();
+    */
+
+    // —— Plantilla local (fallback demo) ——
+    document.getElementById('nombreLine').textContent = nombre + ',';
+
+    const p1 = `Desde pequeña has tenido el coraje de mirar de frente a tus miedos y dar pasos que pocos se atreven a dar. Aquella vez que decidiste enfrentarte al público, aun con el corazón latiendo fuerte, marcó el inicio de una historia en la que tu valentía y determinación serían protagonistas. Ese momento —${logro}— es una prueba clara de tu fuerza.`;
+    const p2 = `Con el tiempo, descubriste el valor de algo que no siempre se ve: tu capacidad para escuchar y entender de verdad a los demás, regalándoles un espacio seguro y lleno de comprensión. Cuando las cosas se complican, encuentras impulso en ${apoyo}. Y mientras miras hacia adelante, ${sueno} te recuerda que estás construyendo un camino propio. `;
+
+    document.getElementById('parrafo1').textContent = p1;
+    document.getElementById('parrafo2').textContent = p2 + 'Eres la prueba de que la verdadera fuerza no siempre se grita… a veces se siente en el alma.';
+
+    // Adjetivo sugerido simple (puedes mapear mejor con IA)
+    const keywords = (logro + ' ' + apoyo + ' ' + sueno + ' ' + consejo).toLowerCase();
+    let adj = 'auténtica';
+    if (keywords.match(/valien|atrev|coraje|miedo|públic/)) adj = 'valiente';
+    else if (keywords.match(/constancia|disciplina|esfuerzo|estudio|trabajo/)) adj = 'disciplinada';
+    else if (keywords.match(/empática|escuchar|comprensión|apoy/)) adj = 'empática';
+    else if (keywords.match(/creativ|arte|dibu|música|escribir|idea/)) adj = 'creativa';
+    document.getElementById('adjetivo').textContent = capFirst(adj);
+
+    // Cierre en Caveat
+    const cierres = {
+      valiente: 'Porque tu valentía abre caminos donde antes había dudas.',
+      disciplinada: 'Porque tu constancia convierte los sueños en pasos reales.',
+      empática: 'Porque tu escucha abraza y hace sentir a otros en casa.',
+      creativa: 'Porque tu imaginación ilumina cada rincón que tocas.',
+      auténtica: 'Porque ser tú misma es, y siempre será, tu mayor poder.'
+    };
+    document.getElementById('frase').textContent = cierres[adj] || cierres['auténtica'];
+  </script>
+</body>
+</html>
