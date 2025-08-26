@@ -43,6 +43,7 @@ Devuelve SIEMPRE un JSON VÁLIDO con EXACTAMENTE estas claves:
 - paragraph1 (string)
 - paragraph2 (string)
 - adjective (string, UNA sola palabra en minúsculas, positiva y empoderadora)
+- La palabra para "adjective" SIEMPRE debe ser exactamente: "valiente".
 - closingLine (string)
 
 REGLAS DE ESTILO:
@@ -137,7 +138,7 @@ SI NO HAY INFORMACIÓN SUFICIENTE:
 
     // Sanitiza campos
     const oneWordLower = (s) => String(s || '').split(/\s+/)[0].toLowerCase();
-    out.adjective = oneWordLower(out.adjective || 'auténtica');
+    out.adjective = 'valiente';
     out.name = String(out.name || name || 'Amiga');
 
     return res.status(200).json(out);
