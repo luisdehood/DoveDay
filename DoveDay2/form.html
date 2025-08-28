@@ -65,8 +65,7 @@
       font-size: clamp(15px, 2.5vw, 18px);
     }
 
-    input[type="text"],
-    textarea{
+    input[type="text"]{
       width:100%;
       font-family:inherit;
       font-weight:400;            /* Regular en inputs */
@@ -79,21 +78,11 @@
       transition:.2s border-color, .2s box-shadow;
       background:#fff;
     }
-    textarea{ min-height:110px; resize:vertical; line-height:1.45; }
     input:focus, textarea:focus{
       border-color:#b8c7e8;
       box-shadow:0 0 0 4px rgba(0,16,93,.07);
     }
 
-    .char-counter {
-      position: absolute;
-      bottom: 6px;
-      right: 10px;
-      font-size: 12px;
-      color: #888;
-      opacity: 0.8;
-      pointer-events: none;
-    }
 
     .logo {
       max-width: 60px;
@@ -117,6 +106,8 @@
     }
     .btn:active{ transform:translateY(1px); }
     .btn:disabled{ opacity:.6; cursor:not-allowed; }
+    .disclaimer{margin-top:22px;font-size:14px;line-height:1.45;color:#b1b1b1;text-align:center}
+    .label-hint{font-weight:400; color:#9aa1ad; font-size:0.9em; margin-left:6px}
 
     /* Responsivo pequeño */
     @media (max-width:420px){
@@ -135,52 +126,39 @@
 
     <form id="complimentForm">
       <div class="field">
-        <label for="name">¿Cuál es tu nombre?</label>
+        <label for="name">¿Cuál es tu nombre?<span class="label-hint">(obligatorio)</span></label>
         <input id="name" name="name" type="text" placeholder="Escribe tu nombre" required>
       </div>
 
       <div class="field">
-        <label for="achievement">¿Cuál es un logro personal del que te sientes orgullosa?</label>
-        <textarea id="achievement" name="achievement" placeholder="Cuéntanos ese momento que te hizo sentir orgullosa" required maxlength="100"></textarea>
-        <div class="char-counter">0 / 100</div>
+        <label for="fear">Dime un miedo que superaste <span class="label-hint">(obligatorio)</span></label>
+        <input id="fear" name="fear" type="text" placeholder="" required>
       </div>
 
       <div class="field">
-        <label for="support">En los momentos difíciles, ¿qué te ha ayudado a salir adelante?</label>
-        <textarea id="support" name="support" placeholder="Personas, ideas, hábitos o actividades que te dan fuerza" required maxlength="100"></textarea>
-        <div class="char-counter">0 / 100</div>
+        <label for="trait">Dime una cualidad que te define <span class="label-hint">(obligatorio)</span></label>
+        <input id="trait" name="trait" type="text" placeholder="" required>
       </div>
 
       <div class="field">
-        <label for="dreams">¿Cuáles son tus sueños o metas para el futuro?</label>
-        <textarea id="dreams" name="dreams" placeholder="Metas que te emocionan o pasos que quieres dar" required maxlength="100"></textarea>
-        <div class="char-counter">0 / 100</div>
+        <label for="value">Dime algo que valores mucho <span class="label-hint">(obligatorio)</span></label>
+        <input id="value" name="value" type="text" placeholder="" required>
       </div>
 
       <div class="field">
-        <label for="advice">Si pudieras darte un consejo a ti misma, ¿cuál sería?</label>
-        <textarea id="advice" name="advice" placeholder="Un recordatorio cariñoso para tu yo del futuro" required maxlength="100"></textarea>
-        <div class="char-counter">0 / 100</div>
+        <label for="proud">¿Qué logro te enorgullece? <span class="label-hint">(obligatorio)</span></label>
+        <input id="proud" name="proud" type="text" placeholder="" required>
       </div>
 
       <div class="actions">
-        <button type="submit" class="btn">Enviar</button>
+        <button type="submit" class="btn">QUIERO MI CUMPLIDO</button>
       </div>
+
+      <p class="disclaimer">El contenido es creado con apoyo de herramientas de inteligencia artificial y puede contener variaciones.</p>
     </form>
   </main>
 
   <script>
-    const textareas = document.querySelectorAll('textarea');
-    textareas.forEach(textarea => {
-      const counter = textarea.nextElementSibling;
-      textarea.addEventListener('input', () => {
-        const length = textarea.value.length;
-        counter.textContent = `${length} / 100`;
-      });
-      // Initialize counter on page load
-      counter.textContent = `${textarea.value.length} / 100`;
-    });
-
     const form = document.getElementById('complimentForm');
 
     form.addEventListener('submit', (e) => {
@@ -188,11 +166,17 @@
 
       // Recolecta datos
       const data = {
-        name:       form.name.value.trim(),
-        achievement:form.achievement.value.trim(),
-        support:    form.support.value.trim(),
-        dreams:     form.dreams.value.trim(),
-        advice:     form.advice.value.trim(),
+        name: form.name.value.trim(),
+        // Mapeamos los nuevos campos a los que consume la API actual para mantener compatibilidad
+        achievement: form.fear.value.trim(),     // miedo superado
+        support:     form.trait.value.trim(),    // cualidad que te define
+        dreams:      form.value.value.trim(),    // algo que valoras mucho
+        advice:      form.proud.value.trim(),    // logro que te enorgullece
+        // También guardamos los campos con sus nombres semánticos nuevos
+        fear:  form.fear.value.trim(),
+        trait: form.trait.value.trim(),
+        value: form.value.value.trim(),
+        proud: form.proud.value.trim(),
       };
 
       // Guarda en localStorage para usarlo en la siguiente pantalla
