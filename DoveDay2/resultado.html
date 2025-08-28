@@ -84,6 +84,12 @@
       .adjetivo{ font-size:52px }
       .frase{ font-size:26px }
     }
+
+    /* Toast guía para iOS/Safari */
+    .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:16px; 
+      background:rgba(0,0,0,.82); color:#fff; padding:10px 14px; border-radius:999px; 
+      font-size:14px; font-weight:600; z-index:9999; opacity:0; transition:opacity .2s ease; }
+    .toast.show{ opacity:1; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
@@ -209,6 +215,20 @@
       }
     })();
 
+    // --- Toast helper ---
+    function showToast(msg){
+      let t = document.querySelector('.toast');
+      if(!t){
+        t = document.createElement('div');
+        t.className = 'toast';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(()=>{ t.classList.remove('show'); }, 2800);
+    }
+
     // --- Descargar captura de la tarjeta ---
     const btnShare = document.getElementById('btnShare');
     btnShare?.addEventListener('click', async () => {
@@ -235,9 +255,30 @@
           .replace(/[^a-zA-Z0-9-_]/g,'')
           .toLowerCase();
 
-        // Abre la imagen en una nueva pestaña para que la usuaria pueda guardarla en sus fotos
-        const w = window.open();
-        w.document.write('<img src="' + dataUrl + '" style="width:100%">');
+        // Intentar descarga directa (desktop/Android). iOS/Safari no soporta download.
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+        if (isIOS || isSafari) {
+          // Fallback: abrir en nueva pestaña para que la usuaria elija "Guardar en Fotos"
+          const w = window.open();
+          if (w && w.document) {
+            w.document.write('<meta name="viewport" content="width=device-width,initial-scale=1">');
+            w.document.write('<img src="' + dataUrl + '" style="width:100%;height:auto;display:block">');
+            showToast('Mantén presionada la imagen y elige “Guardar en Fotos”.');
+          } else {
+            // Último recurso si el popup fue bloqueado
+            window.location.href = dataUrl;
+          }
+        } else {
+          // Descarga directa usando un enlace temporal
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = `${safeName}.png`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
       } catch (err) {
         console.error('No se pudo generar la captura:', err);
         alert('No se pudo generar la imagen. Intenta nuevamente.');
@@ -246,5 +287,4 @@
   </script>
 </body>
 </html>
-
 
