@@ -46,7 +46,7 @@ export default async function handler(req, res) {
     const messages = [
       {
         role: 'system',
-        content: `Eres una redactora empática para una experiencia dirigida a mujeres mexicanas. Devuelve SIEMPRE un JSON válido con EXACTAMENTE estas claves: \n- name (string)\n- paragraph1 (string)  // introducción general, positiva\n- complimentLine (string) // línea exacta: "El cumplido perfecto para ti es:\n[adjetivo]"\n- adjective (string) // el adjetivo SOLO de la lista permitida, en minúsculas y una sola palabra\n- closingLine (string) // frase final emotiva\n\nREGLAS:\n- Extensión total (paragraph1 + closingLine) máx. 150 palabras.\n- Tono positivo, cálido y general; no profundices ni inventes detalles.\n- Parafrasea de forma sutil, NO copies literalmente las respuestas.\n- Si hay contenido negativo/ofensivo, responde en tono neutro y respetuoso, sin juicios.\n- Evita temas sensibles: sexo, religión, política, muerte, suicidio, abuso u otros delicados.\n- No firmes ni menciones marcas.\n- El adjetivo debe salir en minúsculas y pertenecer a la lista dada.\n- No añadas texto fuera del JSON.`
+        content: `Eres una redactora empática para una experiencia dirigida a mujeres mexicanas. Devuelve SIEMPRE un JSON válido con EXACTAMENTE estas claves: \n- name (string)\n- paragraph1 (string)  // introducción general, positiva\n- complimentLine (string) // línea exacta: "El cumplido perfecto para ti es:\n[adjetivo]"\n- adjective (string) // el adjetivo SOLO de la lista permitida, en minúsculas y una sola palabra\n- closingLine (string) // frase final emotiva\n\nREGLAS:\n- Extensión total (paragraph1 + closingLine) máx. 150 palabras.\n- Tono positivo, cálido y general; no profundices ni inventes detalles.\n- Parafrasea de forma sutil, NO copies literalmente las respuestas.\n- Si hay contenido negativo/ofensivo, responde en tono neutro y respetuoso, sin juicios.\n- Evita temas sensibles: sexo, religión, política, muerte, suicidio, abuso u otros delicados.\n- No firmes ni menciones marcas.\n- El adjetivo debe salir en minúsculas y pertenecer a la lista dada.\n- Evita sobreusar “valiente”: solo úsalo cuando haya claras señales de coraje/atrevimiento/miedo superado; si hay varias opciones válidas, prefiere una distinta.`
       },
       {
         role: 'user',
@@ -80,7 +80,7 @@ export default async function handler(req, res) {
       }
     ];
 
-    const request = { model: 'gpt-4o-mini', temperature: 0.7, messages };
+    const request = { model: 'gpt-4o-mini', temperature: 0.9, top_p: 0.95, messages };
 
     const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -112,6 +112,59 @@ export default async function handler(req, res) {
       }
     }
 
+    // Heurística server-side para diversificar el adjetivo y alinearlo a palabras clave
+    function pickAdjective(inputs, modelAdj, allowed){
+      const text = [inputs.trait, inputs.value, inputs.fear, inputs.proud]
+        .map(s => String(s||'').toLowerCase()).join(' ');
+
+      // Mapa simple de palabras clave → adjetivo sugerido
+      const rules = [
+        { keys: ['miedo','temor','atrev','valent','arriesg'], adj: 'valiente' },
+        { keys: ['creativ','arte','dibu','pint','idea','imagin'], adj: 'creativa' },
+        { keys: ['empati','escuchar','apoy','comprens','ayudar','cuidar','solidar'], adj: 'empática' },
+        { keys: ['lider','guia','organ','coord','inspira'], adj: 'líder' },
+        { keys: ['honest','verdad','franca','sincera'], adj: 'honesta' },
+        { keys: ['sueñ','meta','futuro','vision','imagina'], adj: 'soñadora' },
+        { keys: ['respons','cumplo','compromiso','constante','disciplina'], adj: 'responsable' },
+        { keys: ['ideas','ingenio','resolver','solucion','creativ'], adj: 'ingeniosa' },
+        { keys: ['aprend','curios','innov','nueva','cambio'], adj: 'innovadora' },
+        { keys: ['autentic','ser yo','genuina','propia'], adj: 'auténtica' },
+        { keys: ['apoyo','donar','compart','generos'], adj: 'generosa' },
+        { keys: ['optim','positiv','ánimo','esperanza'], adj: 'optimista' },
+        { keys: ['brilla','destaca','talento'], adj: 'brillante' },
+        { keys: ['tenaz','constante','persever','logro','esfuerzo'], adj: 'tenaz' },
+        { keys: ['carisma','encanto','conecta','amigas'], adj: 'carismática' },
+        { keys: ['sincera','honesta','transpar'], adj: 'sincera' },
+        { keys: ['confianza','segura','firme'], adj: 'confiable' },
+        { keys: ['solidar','comunidad','juntas'], adj: 'solidaria' },
+        { keys: ['vision','futuro','ideas grandes'], adj: 'visionaria' },
+        { keys: ['lider','guía'], adj: 'líder' },
+      ];
+
+      // Si el modelo dio uno permitido y acorde a palabras, respétalo
+      const normModel = String(modelAdj||'').toLowerCase();
+      if (allowed.includes(normModel)) {
+        // Si el modelo eligió 'valiente' pero el texto no sugiere coraje, la sustituimos
+        const courage = /(miedo|temor|atrev|arriesg|valent)/.test(text);
+        if (normModel === 'valiente' && !courage) {
+          // caemos a selección por reglas o aleatoria
+        } else {
+          return normModel;
+        }
+      }
+
+      // Busca por reglas
+      for (const r of rules){
+        if (r.keys.some(k => text.includes(k)) && allowed.includes(r.adj)) {
+          return r.adj;
+        }
+      }
+
+      // Aleatorio con pequeño sesgo para evitar 'valiente'
+      const pool = allowed.filter(a => a !== 'valiente');
+      return pool[Math.floor(Math.random() * pool.length)] || allowed[0];
+    }
+
     // Fallback mínimo si el modelo no devuelve JSON válido
     if (!out || typeof out !== 'object') {
       const adjective = 'auténtica';
@@ -127,6 +180,8 @@ export default async function handler(req, res) {
     // Sanitiza y asegura reglas en server-side
     const toOneWordLower = (s) => String(s || '').trim().split(/\s+/)[0].toLowerCase();
     let adj = toOneWordLower(out.adjective);
+    // Aplicar heurística para diversificar y alinear
+    adj = pickAdjective({ trait, value, fear, proud }, adj, ALLOWED);
     if (!ALLOWED.includes(adj)) adj = 'auténtica';
 
     // Reconstruye complimentLine por seguridad
