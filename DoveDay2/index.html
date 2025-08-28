@@ -157,13 +157,13 @@
         Tómate un momento para ti, ponte cómoda y deja que la magia suceda: descubre lo que te hace única conociendo tu cumplido perfecto.
       </p>
 
-      <img src="assets/Niña_columpio.png" alt="Niña en columpio" class="img hero" />
-
-      <div class="button-block">
-        <button id="startBtn" class="btn">
-          <img src="assets/btn-iniciar.png" alt="INICIAR" />
-        </button>
-        </p>
+      <div class="image-with-button">
+        <img src="assets/Niña_columpio.png" alt="Niña en columpio" class="img hero" />
+        <div class="button-overlay">
+          <button id="startBtn" class="btn">
+            <img src="assets/btn-iniciar.png" alt="INICIAR" />
+          </button>
+        </div>
       </div>
     </div>
   </main>
@@ -188,3 +188,15 @@
 </script>
 </body>
 </html>
+
+    .image-with-button {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+    .button-overlay {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
