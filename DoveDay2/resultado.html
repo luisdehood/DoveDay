@@ -66,11 +66,16 @@
 
     .card-frame{ position:relative; }
 
-    .share{
-      margin-top:22px; display:grid; place-items:center; gap:10px;
+    .share{ margin-top:22px; display:grid; place-items:center; gap:10px; }
+    .btn-share{ 
+      display:inline-flex; align-items:center; gap:10px; 
+      background:#e9a4c4; color:#00105d; border:0; border-radius:999px; 
+      padding:12px 18px; font-weight:700; font-size:16px; cursor:pointer; 
+      box-shadow:0 6px 18px rgba(0,0,0,.08);
     }
-    .share-icon{ width:44px; height:auto; }
-    .share p{ margin:0; font-size:20px; font-weight:600; }
+    .btn-share:hover{ filter:brightness(0.96); }
+    .share-icon{ width:22px; height:auto; }
+    .share p{ margin:0; font-size:16px; font-weight:700; }
 
     /* Responsive */
     @media (max-width:560px){
@@ -80,6 +85,7 @@
       .frase{ font-size:26px }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
   <main class="wrap">
@@ -116,8 +122,10 @@
     </div>
 
     <div class="share">
-      <img src="assets/share.png" class="share-icon" alt="">
-      <p>Comparte tu resultado en redes</p>
+      <button id="btnShare" class="btn-share" type="button">
+        <img src="assets/share.png" class="share-icon" alt="">
+        <span>Comparte tu resultado en redes</span>
+      </button>
     </div>
   </main>
 
@@ -200,6 +208,45 @@
         runFallback();
       }
     })();
+
+    // --- Descargar captura de la tarjeta ---
+    const btnShare = document.getElementById('btnShare');
+    btnShare?.addEventListener('click', async () => {
+      const card = document.getElementById('card');
+      if (!card) return;
+
+      // Asegura scroll top para capturar todo de forma consistente
+      window.scrollTo(0,0);
+
+      // Espera un frame por si hay fuentes pendientes
+      await new Promise(r => requestAnimationFrame(r));
+
+      try {
+        const canvas = await html2canvas(card, {
+          backgroundColor: '#ffffff',
+          scale: window.devicePixelRatio > 1 ? 2 : 2, // mejor resolución
+          useCORS: true
+        });
+        const dataUrl = canvas.toDataURL('image/png');
+
+        // Nombre del archivo usando el nombre de la usuaria si existe
+        const safeName = (document.getElementById('nombreLine')?.textContent || 'tu-cumplido')
+          .replace(/[,\s]+/g,'-')
+          .replace(/[^a-zA-Z0-9-_]/g,'')
+          .toLowerCase();
+
+        // iOS/Safari a veces no respeta download: abre en pestaña nueva
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `${safeName}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (err) {
+        console.error('No se pudo generar la captura:', err);
+        alert('No se pudo generar la imagen. Intenta nuevamente.');
+      }
+    });
   </script>
 </body>
 </html>
