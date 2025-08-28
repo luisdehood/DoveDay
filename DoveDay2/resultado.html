@@ -107,7 +107,7 @@
         se siente en el alma.</span>
       </p>
 
-      <p class="label-adj">El cumplido perfecto para ti es:</p>
+      <p class="label-adj" id="complimentLabel">El cumplido perfecto para ti es:</p>
       <div class="adjetivo" id="adjetivo">auténtica</div>
 
       <div class="frase" id="frase">Porque ser tú misma es, y siempre será, tu mayor poder.</div>
@@ -161,8 +161,8 @@
       else if (keywords.match(/empática|escuchar|comprensión|apoy/)) adj = 'empática';
       else if (keywords.match(/creativ|arte|dibu|música|escribir|idea/)) adj = 'creativa';
 
-      document.getElementById('adjetivo').textContent = capFirst(adj);
-      document.getElementById('frase').textContent = cierres[adj] || cierres['auténtica'];
+      document.getElementById('adjetivo').textContent = adj;
+      document.getElementById('complimentLabel').textContent = 'El cumplido perfecto para ti es:';
     }
 
     (async () => {
@@ -176,8 +176,25 @@
         const json = await res.json();
         document.getElementById('nombreLine').textContent = (json.name || nombre) + ',';
         document.getElementById('parrafo1').textContent = json.paragraph1 || p1;
-        document.getElementById('parrafo2').textContent = json.paragraph2 || (p2 + 'Eres la prueba de que la verdadera fuerza no siempre se grita… a veces se siente en el alma.');
-        document.getElementById('adjetivo').textContent = capFirst(json.adjective || 'auténtica');
+
+        // Ocultamos parrafo2 para ajustarnos al nuevo formato (intro + cumplido + cierre)
+        const p2El = document.getElementById('parrafo2');
+        if (p2El) { p2El.textContent = ''; p2El.style.display = 'none'; }
+
+        // Usar la línea exacta del cumplido cuando venga del backend
+        if (json.complimentLine) {
+          const parts = String(json.complimentLine).split('\n');
+          // Primera línea: etiqueta
+          document.getElementById('complimentLabel').textContent = parts[0] || 'El cumplido perfecto para ti es:';
+          // Segunda línea: adjetivo en minúsculas (según regla del prompt)
+          document.getElementById('adjetivo').textContent = (parts[1] || json.adjective || 'auténtica').trim();
+        } else {
+          // Fallback si no viene complimentLine
+          document.getElementById('complimentLabel').textContent = 'El cumplido perfecto para ti es:';
+          document.getElementById('adjetivo').textContent = (json.adjective || 'auténtica');
+        }
+
+        // Frase de cierre del modelo, si no, fallback
         document.getElementById('frase').textContent = json.closingLine || cierres['auténtica'];
       } catch(e) {
         runFallback();
@@ -186,3 +203,4 @@
   </script>
 </body>
 </html>
+
