@@ -261,33 +261,65 @@
           scale: window.devicePixelRatio > 1 ? 2 : 2, // mejor resolución
           useCORS: true
         });
-        // Convierte a Blob para poder usar Web Share API con archivos
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        const dataUrl = canvas.toDataURL('image/png');
+        // --- Generar imagen en formato Historia (1080x1920) con margen y contenido centrado ---
+        const srcCanvas = canvas; // lo que capturamos de la tarjeta
+        const STORY_W = 1080;
+        const STORY_H = 1920;
+        const PADDING = 100; // margen visual alrededor del contenido en la historia
+
+        // Crear lienzo destino (historia)
+        const storyCanvas = document.createElement('canvas');
+        storyCanvas.width = STORY_W;
+        storyCanvas.height = STORY_H;
+        const ctx = storyCanvas.getContext('2d');
+
+        // Fondo blanco
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, STORY_W, STORY_H);
+
+        // Calcular escala para encajar el src dentro del área interna con padding
+        const innerW = STORY_W - PADDING * 2;
+        const innerH = STORY_H - PADDING * 2;
+        const scale = Math.min(innerW / srcCanvas.width, innerH / srcCanvas.height);
+        const targetW = Math.round(srcCanvas.width * scale);
+        const targetH = Math.round(srcCanvas.height * scale);
+        const offsetX = Math.round((STORY_W - targetW) / 2);
+        const offsetY = Math.round((STORY_H - targetH) / 2);
+
+        // Dibujar contenido centrado
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(srcCanvas, offsetX, offsetY, targetW, targetH);
+
+        // (Opcional) guía sutil del margen — desactivado por default
+        // ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+        // ctx.strokeRect(PADDING, PADDING, innerW, innerH);
+
+        // Preparar Blob/DataURL a partir del lienzo historia
+        const storyBlob = await new Promise(resolve => storyCanvas.toBlob(resolve, 'image/png'));
+        const storyDataUrl = storyCanvas.toDataURL('image/png');
 
         // Nombre base del archivo usando el nombre mostrado
         const safeName = (document.getElementById('nombreLine')?.textContent || 'tu-cumplido')
           .replace(/[\,\s]+/g,'-')
           .replace(/[^a-zA-Z0-9-_]/g,'')
           .toLowerCase();
-        const fileName = `${safeName}.png`;
+        const fileName = `${safeName}-historia.png`;
 
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-        // 1) Intento ideal en iOS/Safari (y navegadores compatibles): Web Share API con archivos
-        if (blob && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] })) {
+        // 1) Intento ideal: Web Share API con archivos (iOS/Android/desktop compatibles)
+        if (storyBlob && navigator.canShare && navigator.canShare({ files: [new File([storyBlob], fileName, { type: 'image/png' })] })) {
           try {
             await navigator.share({
-              files: [new File([blob], fileName, { type: 'image/png' })],
+              files: [new File([storyBlob], fileName, { type: 'image/png' })],
               title: 'Mi cumplido',
               text: 'Te comparto mi carta ✨'
             });
-            // Opcional: toast confirmación
             showToast('Compartido desde la hoja de compartir.');
             return;
           } catch (shareErr) {
-            // Si la usuaria cancela o falla, continuamos con alternativas
             console.warn('Share cancelado o no disponible, fallback…', shareErr);
           }
         }
@@ -295,7 +327,7 @@
         // 2) Android/desktop: descarga directa
         if (!isIOS && !isSafari) {
           const a = document.createElement('a');
-          a.href = dataUrl; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+          a.href = storyDataUrl; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
           showToast('Imagen descargada.');
           return;
         }
@@ -304,11 +336,11 @@
         const w = window.open();
         if (w && w.document) {
           w.document.write('<meta name="viewport" content="width=device-width,initial-scale=1">');
-          w.document.write('<img src="' + dataUrl + '" style="width:100%;height:auto;display:block">');
+          w.document.write('<img src="' + storyDataUrl + '" style="width:100%;height:auto;display:block">');
           showToast('Mantén presionada la imagen y elige “Guardar en Fotos”.');
         } else {
           // Último recurso si bloquea popups
-          window.location.href = dataUrl;
+          window.location.href = storyDataUrl;
         }
       } catch (err) {
         console.error('No se pudo generar la captura:', err);
@@ -319,5 +351,3 @@
   </script>
 </body>
 </html>
-
-
