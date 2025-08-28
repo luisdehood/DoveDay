@@ -247,37 +247,54 @@
           scale: window.devicePixelRatio > 1 ? 2 : 2, // mejor resolución
           useCORS: true
         });
+        // Convierte a Blob para poder usar Web Share API con archivos
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         const dataUrl = canvas.toDataURL('image/png');
 
-        // Nombre del archivo usando el nombre de la usuaria si existe
+        // Nombre base del archivo usando el nombre mostrado
         const safeName = (document.getElementById('nombreLine')?.textContent || 'tu-cumplido')
-          .replace(/[,\s]+/g,'-')
+          .replace(/[\,\s]+/g,'-')
           .replace(/[^a-zA-Z0-9-_]/g,'')
           .toLowerCase();
+        const fileName = `${safeName}.png`;
 
-        // Intentar descarga directa (desktop/Android). iOS/Safari no soporta download.
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-        if (isIOS || isSafari) {
-          // Fallback: abrir en nueva pestaña para que la usuaria elija "Guardar en Fotos"
-          const w = window.open();
-          if (w && w.document) {
-            w.document.write('<meta name="viewport" content="width=device-width,initial-scale=1">');
-            w.document.write('<img src="' + dataUrl + '" style="width:100%;height:auto;display:block">');
-            showToast('Mantén presionada la imagen y elige “Guardar en Fotos”.');
-          } else {
-            // Último recurso si el popup fue bloqueado
-            window.location.href = dataUrl;
+        // 1) Intento ideal en iOS/Safari (y navegadores compatibles): Web Share API con archivos
+        if (blob && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] })) {
+          try {
+            await navigator.share({
+              files: [new File([blob], fileName, { type: 'image/png' })],
+              title: 'Mi cumplido',
+              text: 'Te comparto mi carta ✨'
+            });
+            // Opcional: toast confirmación
+            showToast('Compartido desde la hoja de compartir.');
+            return;
+          } catch (shareErr) {
+            // Si la usuaria cancela o falla, continuamos con alternativas
+            console.warn('Share cancelado o no disponible, fallback…', shareErr);
           }
-        } else {
-          // Descarga directa usando un enlace temporal
+        }
+
+        // 2) Android/desktop: descarga directa
+        if (!isIOS && !isSafari) {
           const a = document.createElement('a');
-          a.href = dataUrl;
-          a.download = `${safeName}.png`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
+          a.href = dataUrl; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+          showToast('Imagen descargada.');
+          return;
+        }
+
+        // 3) iOS/Safari fallback: abrir en nueva pestaña para "Guardar en Fotos"
+        const w = window.open();
+        if (w && w.document) {
+          w.document.write('<meta name="viewport" content="width=device-width,initial-scale=1">');
+          w.document.write('<img src="' + dataUrl + '" style="width:100%;height:auto;display:block">');
+          showToast('Mantén presionada la imagen y elige “Guardar en Fotos”.');
+        } else {
+          // Último recurso si bloquea popups
+          window.location.href = dataUrl;
         }
       } catch (err) {
         console.error('No se pudo generar la captura:', err);
@@ -287,4 +304,5 @@
   </script>
 </body>
 </html>
+
 
