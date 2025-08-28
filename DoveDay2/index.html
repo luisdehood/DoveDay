@@ -69,6 +69,20 @@
       margin-bottom: 0;
     }
 
+    footer {
+      position: fixed;
+      bottom: 10px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 0.75em;
+      color: #00105d;
+    }
+    footer a {
+      color: #00105d;
+      text-decoration: underline;
+    }
+
     <link rel="stylesheet" href="assets/fonts/sofia-pro.css">
 
   </style>
@@ -96,15 +110,15 @@
         </p>
       </div>
     </div>
-    <footer style="margin-top:20px; font-size:0.75em; color:#00105d;">
-      <a href="aviso-privacidad.html" style="color:#00105d; text-decoration:underline;">
-        Aviso de privacidad
-      </a>
-    </footer>
     <div style="position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; z-index: -1;">
       <img src="assets/Niña_columpio.png" alt="Niña en columpio" style="max-width: 100%; height: auto;">
     </div>
   </main>
+  <footer>
+    <a href="aviso-privacidad.html">
+      Aviso de privacidad
+    </a>
+  </footer>
 
  <script>
   const btn = document.getElementById('startBtn');
@@ -113,5 +127,4 @@
   });
 </script>
 </body>
-</html>
 </html>
