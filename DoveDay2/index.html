@@ -11,7 +11,10 @@
       --page-max: 420px; /* ancho columna */
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
+    html,body{
+      height:100%;
+      overflow: hidden; /* prevent scroll */
+    }
     body{
       margin:0;
       background:#fff;
@@ -127,8 +130,9 @@
   </div>
   <main class="wrap">
     <div class="stack">
-      <h1 style="font-family: 'Sofia Pro', sans-serif; font-weight: 700; color: #00105d; max-width: 380px; margin: 0; font-size: 1.45em;">
-        Las niñas no nacen creyendo que su valor depende de su apariencia. <br> Lo aprenden.
+      <h1 style="font-family: 'Sofia Pro', sans-serif; font-weight: 700; color: #00105d; max-width: 380px; margin: 0; font-size: 1.45em; line-height: 1.5;">
+        Las niñas no nacen creyendo que su valor depende de su apariencia.
+        <span style="display:block; margin-top: 8px;">Lo aprenden.</span>
       </h1>
 
       <img src="assets/crea-tu-cumplido-perfecto.png"
