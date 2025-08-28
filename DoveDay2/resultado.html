@@ -235,13 +235,9 @@
           .replace(/[^a-zA-Z0-9-_]/g,'')
           .toLowerCase();
 
-        // iOS/Safari a veces no respeta download: abre en pestaña nueva
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = `${safeName}.png`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+        // Abre la imagen en una nueva pestaña para que la usuaria pueda guardarla en sus fotos
+        const w = window.open();
+        w.document.write('<img src="' + dataUrl + '" style="width:100%">');
       } catch (err) {
         console.error('No se pudo generar la captura:', err);
         alert('No se pudo generar la imagen. Intenta nuevamente.');
@@ -250,4 +246,5 @@
   </script>
 </body>
 </html>
+
 
