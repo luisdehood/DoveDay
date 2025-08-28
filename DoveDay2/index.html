@@ -22,6 +22,8 @@
       color:var(--dove-navy);
       font-family: 'Sofia Pro', sans-serif;
       display:flex;
+      flex-direction: column;
+      min-height: 100vh;
       justify-content:flex-start;
     }
     .wrap{
@@ -29,11 +31,11 @@
       max-width:var(--page-max);
       min-height:100svh; /* iOS-friendly viewport height */
       padding: max(40px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
-      margin-inline:auto;
       text-align:center;
       display:flex;
       flex-direction:column;
       justify-content:flex-start;
+      flex: 1;
     }
     .stack{ display:flex; flex-direction:column; align-items:center; gap:28px; }
     @media (min-width:480px){ .stack{ gap:40px; } }
