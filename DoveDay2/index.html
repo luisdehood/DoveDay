@@ -131,6 +131,18 @@
       border-radius: 8px;
     }
 
+    .image-with-button {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+    .button-overlay {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+    }
   </style>
 </head>
 <body>
@@ -188,15 +200,3 @@
 </script>
 </body>
 </html>
-
-    .image-with-button {
-      position: relative;
-      display: inline-block;
-      width: 100%;
-    }
-    .button-overlay {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-    }
