@@ -145,16 +145,102 @@
     }
 
     // Lee datos del formulario
-    const data = JSON.parse(localStorage.getItem('complimentForm') || "{}");
+    let data = {};
+    try { data = JSON.parse(localStorage.getItem('complimentForm') || '{}'); } catch { data = {}; }
 
-    // Helper para capitalizar nombre
-    const cap = s => (s||"").trim().replace(/\s+/g,' ').replace(/(^|\s)\S/g, m => m.toUpperCase());
+    // --- Sanitizador de nombre: permite sólo nombres válidos y bloquea palabras ofensivas ---
+    function stripDiacritics(s){
+      return (s||"").normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+    function toTitleCase(s){
+      return (s||"").trim().replace(/\s+/g,' ').split(' ').map(w => w ? (w[0].toUpperCase() + w.slice(1).toLowerCase()) : '').join(' ');
+    }
+    function sanitizeName(raw){
+      // --- 1) Construye dos variantes: una "limpia" para mostrar (s) y otra para detección (detect) ---
+      // a) Variante visible: sólo letras (incluye acentos), espacios, guiones y apóstrofes
+      let s = (raw||"")
+        .trim()
+        .replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]/g, '');
 
-    // Helper para capitalizar primera letra y poner resto en minúsculas
-    const capFirst = str => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+      // b) Variante para detección (minúsculas, sin tildes, con leet y repetición colapsados)
+      const rawDetect = stripDiacritics(String(raw||"").toLowerCase());
+      const detectLeet = rawDetect
+        .replace(/[@ª]/g,'a')
+        .replace(/4/g,'a')
+        .replace(/3/g,'e')
+        .replace(/[1!|]/g,'i')
+        .replace(/0/g,'o')
+        .replace(/[$5]/g,'s')
+        .replace(/7/g,'t');
+      const detectAlpha = detectLeet.replace(/[^a-zñ\s-]+/g,' ');
+      const detectCollapsed = detectAlpha
+        .replace(/([a-zñ])\1{2,}/g,'$1$1')  // "holaaa" -> "holaa"
+        .replace(/\s+/g,' ')                 // espacios múltiples a uno
+        .trim();
 
-    // Fallbacks por si falta algo
-    const nombre = cap(data.name) || "Amiga";
+      // --- 2) Listas de palabras prohibidas (tokens exactos) ---
+      const BAD = [
+        // groserías comunes ES/LA
+        'puta','puto','putita','putita','putita','putaza','putete','putear',
+        'pendeja','pendejo','pendejita','pendejote',
+        'idiota','imbecil','imbécil','estupida','estupido','estúpida','estúpido',
+        'zorra','perra','cabrona','cabron','cabrón','culera','culero','naca','naco',
+        'mierda','chingada','chingado','chingar','chingona','chingon','chingón',
+        'verga','verg*','verguenza','vergüenza', // incluye formas engañosas
+        'prostituta','ramera','zafio','marica','marico','maricón','putrefacto',
+        'negra','negro','india','indio','gata','gato', // como insulto racial/clasista (detección conservadora)
+        'nazi','hitler','kkk',
+        // ingles frecuentes
+        'bitch','whore','slut','hoe','fuck','fucker','fucking','shit','bastard',
+        'dumb','retard','retarded','asshole','dick','cock','cunt','nigger','nigga'
+      ];
+
+      // --- 3) Patrones para variaciones creativas (leet, separadores, asteriscos) ---
+      const BAD_PATTERNS = [
+        /p\s*[uv]t[a|o]/,               // pvt@ / puto / puta
+        /p\s*e\s*n\s*d\s*e\s*j[oa]/, // p e n d e j a/o
+        /c\s*a\s*b\s*r\s*o\s*n/,     // cabron
+        /c\s*u\s*l\s*e\s*r[ao]/,     // culera/o
+        /z\s*o\s*r\s*r\s*a/,         // zorra
+        /p\s*e\s*r\s*r\s*a/,         // perra
+        /m\s*i\s*e\s*r\s*d\s*a/,    // mierda
+        /ch\s*i\s*n\s*g\s*a\s*d[ao]/, // chingada/o
+        /v\s*e\s*r\s*g\s*a/,         // verga
+        /(b|v)\s*i\s*t\s*c\s*h/,     // bitch
+        /f\s*u\s*c\s*k/,              // fuck
+        /s\s*h\s*i\s*t/,              // shit
+        /a\s*s\s*s\s*h\s*o\s*l\s*e/,// asshole
+        /n\s*i\s*g\s*g\s*(e|a)\s*r/, // nigger/nigga
+      ];
+
+      // --- 4) Reglas extra de seguridad ---
+      // bloquea si parece URL/cuenta/emoji obvio
+      const looksLikeUrl = /https?:\/\//.test(raw) || /www\./.test(raw);
+      if (looksLikeUrl) return 'Amiga';
+
+      // --- 5) Validaciones de longitud ---
+      if (detectCollapsed.length < 2 || detectCollapsed.length > 40) return 'Amiga';
+
+      // --- 6) Tokenización para match exacto ---
+      const tokens = detectCollapsed.split(/\s+/);
+
+      // --- 7) Detección de groserías ---
+      const inList = tokens.some(t => BAD.includes(t));
+      const inPatterns = BAD_PATTERNS.some(rx => rx.test(detectCollapsed));
+      const joinNoSpace = detectCollapsed.replace(/\s+/g,'');
+      const inJoined = BAD.some(b => joinNoSpace.includes(b)); // atrapa "p-e-n-d-e-j-a" sin espacios
+
+      if (inList || inPatterns || inJoined) return 'Amiga';
+
+      // --- 8) Si la variante visible quedó vacía tras limpieza, usa Amiga ---
+      if (!s) return 'Amiga';
+
+      // --- 9) Devuelve nombre en Title Case ---
+      return toTitleCase(s);
+    }
+
+    // Sanitiza y formatea el nombre (con filtro de palabras)
+    const nombre = sanitizeName(data.name);
     const logro = data.achievement || "un logro que te llenó de orgullo";
     const apoyo = data.support || "el apoyo de quienes te quieren";
     const sueno = data.dreams || "tus metas para el futuro";
@@ -172,19 +258,27 @@
     };
 
     function runFallback() {
-      document.getElementById('nombreLine').textContent = nombre + ',';
-      document.getElementById('parrafo1').textContent = p1;
-      document.getElementById('parrafo2').textContent = p2 + 'Eres la prueba de que la verdadera fuerza no siempre se grita… a veces se siente en el alma.';
+      // Fallback genérico (idéntico al del server)
+      const nombreF = 'Amiga';
+      const paragraph1 = 'Gracias por compartir un poco de ti. Tu forma de ver la vida transmite crecimiento, apertura y confianza en tu propio camino, y eso inspira a quienes te rodean.';
+      const complimentLabel = 'El cumplido perfecto para ti es:';
+      const adjective = 'auténtica';
+      const closingLine = 'Porque tu esencia, tal y como es, merece ser celebrada cada día.';
 
-      const keywords = (logro + ' ' + apoyo + ' ' + sueno + ' ' + consejo).toLowerCase();
-      let adj = 'auténtica';
-      if (keywords.match(/valien|atrev|coraje|miedo|públic/)) adj = 'valiente';
-      else if (keywords.match(/constancia|disciplina|esfuerzo|estudio|trabajo/)) adj = 'disciplinada';
-      else if (keywords.match(/empática|escuchar|comprensión|apoy/)) adj = 'empática';
-      else if (keywords.match(/creativ|arte|dibu|música|escribir|idea/)) adj = 'creativa';
+      const nombreEl = document.getElementById('nombreLine');
+      const p1El = document.getElementById('parrafo1');
+      const labelEl = document.getElementById('complimentLabel');
+      const adjEl = document.getElementById('adjetivo');
+      const fraseEl = document.getElementById('frase');
 
-      document.getElementById('adjetivo').textContent = adj;
-      document.getElementById('complimentLabel').textContent = 'El cumplido perfecto para ti es:';
+      if (nombreEl) nombreEl.textContent = nombreF + ',';
+      if (p1El) p1El.textContent = paragraph1;
+      if (labelEl) labelEl.textContent = complimentLabel;
+      if (adjEl) adjEl.textContent = adjective;
+      if (fraseEl) fraseEl.textContent = closingLine;
+      // Oculta parrafo2 si existe
+      const p2El = document.getElementById('parrafo2');
+      if (p2El) { p2El.textContent = ''; p2El.style.display = 'none'; }
     }
 
     (async () => {
