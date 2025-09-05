@@ -105,24 +105,35 @@
       z-index: 9999;
     }
     .splash-box {
+      width: min(600px, 90vw);
       background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      padding: 20px 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+      padding: 28px 28px 32px;
       text-align: center;
-      max-width: 320px;
+      border: 1px solid rgba(0,16,93,.08);
     }
-    .splash-box h2 {
-      font-size: 1.2em;
+   .splash-box h2 {
+      font-size: 24px;
+      line-height: 1.1;
       margin: 0 0 8px;
-      color: #000;
+      color: var(--dove-navy);
+      font-weight: 800;
     }
     .splash-box p {
-      font-size: 0.9em;
-      color: #333;
-      margin: 0;
+      font-size: 16px;
+      line-height: 1.4;
+      color: var(--dove-navy);
+      margin: 0 0 16px;
+      opacity: .9;
     }
-
+    .splash-qr {
+      width: 220px;
+      max-width: 60vw;
+      height: auto;
+      display: block;
+      margin: 8px auto 0;
+    }
     .hero {
       width:100%;
       height:auto;
@@ -146,10 +157,12 @@
   </style>
 </head>
 <body>
-  <div id="splash">
+ <!-- SPLASH DESKTOP/TABLET -->
+  <div id="splash" aria-hidden="true">
     <div class="splash-box">
       <h2>Disponible solo en móvil</h2>
-      <p>Abre esta página desde tu teléfono para vivir la experiencia.</p>
+      <p>Para mejorar la experiencia accesa desde un móvil con el siguiente QR</p>
+      <img class="splash-qr" src="assets/Qr.png" alt="Escanea el código QR para abrir en tu teléfono">
     </div>
   </div>
   <main class="wrap">
